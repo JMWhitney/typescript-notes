@@ -1,13 +1,6 @@
-interface Todo {
-  name: string;
-  complete: boolean;
+enum TodoState {
+  Completed = 0,
+  HighPriority,
+  LowPriority,
+  Cancelled
 }
-
-interface ITodoService {
-  add(todo: Todo): Todo;
-  delete(todoId: number): void;
-  getAll(): Todo[];
-  getById(todoId: number): Todo;
-}
-
-var todo = <Todo>{};

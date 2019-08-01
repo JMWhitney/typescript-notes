@@ -161,7 +161,7 @@ function totalLength(x, y) {
 }
 ```
 
-#Defining Custom Types with Interfaces
+# Defining Custom Types with Interfaces
 
 TypeScript allows you to work with ES2015 features while preventing some common bugs like misspelling a variable name or returning the wrong type from a function. But a more powerful feature of TypeScript is the ability to create your own custom data types that describe the data structures and behavior in your applicaions. 
 
@@ -266,4 +266,305 @@ Because Todo is intended to describe only the data structure of a Todo item, we'
   }
 ```
 
-Note: the actual implementations of these functions does not exist yet. The purpose of the interface is only to make sure that the parameter and return types of the methods on the object are valid. To create the funciton implementations we will need classes. 
+Note: the actual implementations of these functions does not exist yet. The purpose of the interface is only to make sure that the parameter and return types of the methods on the object are valid. To create the funciton implementations we will need classes which will be covered later.
+
+## Using interfaces to describe funcitons
+
+If you are familiar with javascript then you know functions are objects. That means you can assign data and method properties to them just like you would any other object.
+
+```javascript
+  var $ = function(selector) {
+    // Find DOM element
+  }
+
+  $.version = 1.12; // This is legitimate javascript code. 
+```
+
+That means that we will probably want to describe it with an interface sooner or later. 
+
+```typescript
+  // Represents the above snippet.
+  interface jQuery {
+    (selector: string): HTMLElement;
+    version: number;
+  }
+```
+
+The version property is nothing new here, but the way function objects are represented is by using a nameless function. Other than the fact that the function has no identifier inside the interface, all the normal rules still apply. It accepts a string type as a parameter, and returns an HTMLElement which is a built in type in javascript. 
+
+To specify that TypeScript treat a function as an instance of this interface you can use casting syntax.
+
+```typescript
+  // Treat this funcion like an instance of the jQuery interface
+  var $ = <jQuery>function(selector) {
+    // Find DOM element
+  }
+
+  $.version = 1.12;
+```
+ 
+The casting syntax is like saying to TypeScript, "Hey, I don't care what type of object you think this is. It's definitely a jQuery type". In essence you override the basic type checking in place and some people suggest that as a reason the casting syntax should be used as little as possible.
+
+## Extending interface definitions
+
+JavaScript is a dynamic language, so sometimes you might want to extend the data and method properties on an object on the fly. One example of this is the jQuery library that allows you to add custom functionality to it with its plugin model. We started to describe jQuery in the above snippets, but let's continue to add functionality to make it behave more like the real thing.
+
+```typescript
+  interface jQuery {
+    (selector: (string | any)): HTMLElement;
+    fn: any;
+    version: number;
+  }
+
+  var container = $('#container');
+```
+
+Except one difference between this description and the real jQuery library is that jQuery returns a jQueryElement, not an HTMLElement.
+
+```typescript
+  interface jQuery {
+    (selector: (string | any)): jQueryElement;
+    fn: any;
+    version: number;
+  }
+```
+
+The jQueryElement is a JavaScript object that has helper methods like the data method, that allows you to assign data to an HTMLElement data property, or extract a previously assigned value from the data property. 
+
+In other words the interface for the jQueryElement might look like this:
+
+```typescript
+ interface jQueryElement {
+   data(name: string): any;
+   data(name: string, data: any): jQueryElement;
+ }
+```
+
+And we would use jQuery to modify data properties like this:
+
+```typescript
+  interface Todo {
+    name: string;
+    completed?: boolean;
+  }
+
+  interface jQuery {
+    (selector: (string | any)): jQueryElement;
+    fn: any;
+    version: number;
+  }
+
+  interface jQueryElement {
+    data(name: string): any;
+    data(name: string, data: any): jQueryElement;
+  }
+
+  var todo = { name: "Clean the gutters" };
+  var container = $('#container'); // Use jQuery to get a reference to a DOM element
+  container.data('todo', todo); // Assign the todo object to the DOM element's data property 'todo'
+  var savedTodo = container.data('todo'); // Read the element's data property 'todo' using the jQueryElement overloaded data function. 
+```
+
+That's the behavior that comes with jQuery out of the box. But jQuery allows you to attach additional behavior to a special property that it has called fn. 
+
+So I can use that fact to create a custom method that assigns an instance of a Todo to the data of an HTMLElement.
+
+```typescript
+  $.fn.todo = function(todo?: Todo): Todo {
+    if(todo) {
+      $(this).data('todo', todo);
+    } else {
+      return $(this).data('todo');
+    }
+  }
+```
+
+What's more is that once I define this property I should be able to call it using any previously created jQueryElement like this:
+
+```typescript
+  container.todo(Todo) //TypeScript Error: Property 'todo' does not exist on type 'jQueryElement'.
+```
+
+But TypeScript will complain and throw an error because todo is not listed on the jQueryElement Interface. 
+
+Now, we just created the jQueryElement interface, so we could update it to include the methods that we want:
+
+```typescript
+  interface jQueryElement {
+    data(name: string): any;
+    data(name: string, data: any): jQueryElement;
+
+    todo(): Todo;
+    todo(todo: Todo): jQueryElement;
+  }
+```
+
+But, since jQuery is a third party library that I didn't create nor do I own, let's assume I don't have to ability to modify this interface nor should I attempt to.
+
+Thankfull, jQuery allows you to simply extend interfaces without actually changing the original definition. 
+
+How you do this is by creating a new interface that shares the same name as the original definition but contains the custom properties that you defined.
+
+```typescript
+  //Original definition
+  interface jQueryElement {
+    data(name: string): any;
+    data(name: string, data: any): jQueryElement;
+  }
+
+  //Interface extension. Does not override the original.
+  interface jQueryElement {
+    todo(): Todo;
+    todo(todo: Todo): jQueryElement;
+  }
+
+  var todo = { name: "Clean the gutters" };
+  var container = $('#container');
+  container.todo(Todo); // Valid
+```
+
+You can have any number of interface extensions and they won't override previous interfaces of the same name. As a general practice, it is probably best to keep these extensions to code that you don't own/did not create.
+
+## Defining constant values with enums
+
+If you're familiar with enums in other languages such as Java or C#, enums in TS act is pretty much the same way. Enums are constants used to replace the "magic" strings and numbers you would otherwise use. To understand what we mean by magic let's rexamine our Todo code.
+
+```typescript
+  interface Todo {
+    name: string;
+    completed?: boolean;
+  }
+
+  var todo: Todo = {
+    name: "Clean the gutters",
+    completed: false
+  }
+```
+
+Let's say that a Todo item can be in one of several states, but only in one of these states. Let's say high priority, low priority, completed, or cancelled. 
+
+So instead of our completed property we will have a state property:
+
+```typescript 
+  interface Todo {
+    name: string;
+    state: number;
+  }
+```
+
+Here we use a number to represent the state, and we might assign a mapping of each possible state to a number like this:
+
+Completed: 0,
+High priority : 1,
+Low priority : 2,
+Cancelled : 3,
+
+Or a character, or a string, or whatever. But whatever the case, we will end up hard-coding the state throughout our application like this:
+
+```typescript
+  function cancel(todo: Todo) {
+    if(todo.state != 3) {
+      throw "Can't cancel a cancelled task!"; 
+    }
+  }
+```
+
+Which might make sense now. But what if you come back to the project later down the line and you forgot what the arbitrary mappings were? Or you want to hire someone else to work on the project? They won't understand the mappings, and it's needlessly confusing.
+
+Instead we use enums to give ourselves more accurate descriptors. The TypeScript code to do this looks like:
+
+```typescript
+  enum TodoState {
+    Completed = 0,
+    HighPriority,
+    LowPriority,
+    Cancelled,
+  }
+```
+
+Check out the JavaScript that this generates:
+
+```javascript
+  var TodoState;
+  (function (TodoState) {
+      TodoState[TodoState["Completed"] = 0] = "Completed";
+      TodoState[TodoState["HighPriority"] = 1] = "HighPriority";
+      TodoState[TodoState["LowPriority"] = 2] = "LowPriority";
+      TodoState[TodoState["Cancelled"] = 3] = "Cancelled";
+  })(TodoState || (TodoState = {}));
+```
+
+It might not be immediately obvious what this code does, so let's play around with it in the console.
+
+```javascript
+  console.log(TodoState) // {0: "Completed", 1: "HighPriority", 2: "LowPriority", 3: "Cancelled", Completed: 0, HighPriority: 1, LowPriority: 2, Cancelled: 3}
+```
+
+Interesting. So it appears that it creates an IIFE, passes in TodoState if it is already defined. Otherwise it passes in TodoState as an empty object. Then creates a pair of properties on TodoState for each original enum definition. One property maps the string to the number, and the other property maps the number to the string. So we have a value mapping that works in both directions. In practice this looks like:
+
+```javascript
+  console.log(TodoState.Completed) // 0
+  console.log(TodoState[0]) // "Completed"
+```
+
+Pretty neat, huh? So let's refactor our Todo code from earlier to work with our enums instead.
+
+```typescript
+  interface Todo {
+    name: string;
+    state: TodoState;
+  }
+
+  var todo: Todo = {
+    name: "Clean the gutters",
+    state: TodoState.LowPriority
+  }
+
+  enum TodoState {
+    Completed = 0,
+    HighPriority,
+    LowPriority,
+    Cancelled,
+  }
+
+  function cancel(todo: Todo) {
+    if(todo.state != TodoState.Cancelled) {
+      throw "Can't cancel a cancelled task!"; 
+    }
+  }
+```
+
+As you can see, this is a simple and elegant way to avoid hardcoded constants, which can make code brittle and confusing. 
+
+## Defining anonymous types
+
+Now that we know how to explicitly declare interfaces, let's look at how to declare them inplicity in-line, anywhere that accepts a type. This approach is called an anonymous type.
+
+Let's say I wanted to create an object with only a name property. I could define a whole interface, or I could specify the object type, in-line, next to the declaration, anonymously.
+
+```typescript
+  var todo: { name: string };
+  
+  todo = { age: 41 } //TypeScript Error: Type '{ age: number; }' is not assignable to type '{ name: sring; }'. Object literal may only specify known properties, and 'age' does not exist in type '{ name: string }'.
+```
+
+This can be pretty useful in certain circumstances. Remember when we created the totalLength function, that used union types to accept only parameters that were of a type string or array? 
+
+```typescript
+function totalLength(x: (string | any[]), y: (string | any[])): number {
+  var total: number = x.length + y.length;
+  return total;
+}
+```
+
+Well why not fully embrace the dynamism of JavaScript and allow any parameter that has a length property? We can use anonymous types to do so.
+
+```typescript
+  function totalLength(x: { length: number }, y: { length: number }): number {
+  var total: number = x.length + y.length;
+
+  return total;
+}
+```
+
+This can make code that is more reusable, and sometimes easier to understand. However, there is still one problem which is there is nothing stopping users from passing in two parameters of different types. That means someone could pass in an array and add it's lengh to the length of a string. Which may not be considerable meaningfull, and maybe we want to restrict users from doing so. But this will be solved when we cover generics later. 
