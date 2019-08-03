@@ -1,4 +1,8 @@
+# TypeScript
+
 TypeScript is a superset of JavaScript, meaning every TypeScript program is transpiled into plain JavaScript. This also means every JavaScript program is also a valid TypeScript program. 
+
+### JavaScript and its typing system
 
 JavaScript often relies on a principle called "Duck" typing, because it has no way to define its own data types like traditional class-based object oriented programming languages. The principle behind duck typing is that if it looks like a duck, walks like a duck, and quacks like a duck, it is probably a duck. The metaphore here is that if an object is called "Duck", and contains a property quack() then it is probably a duck type. 
 
@@ -161,7 +165,9 @@ function totalLength(x, y) {
 }
 ```
 
-# Defining Custom Types with Interfaces
+## Custom Types
+
+### Defining Custom Types with Interfaces
 
 TypeScript allows you to work with ES2015 features while preventing some common bugs like misspelling a variable name or returning the wrong type from a function. But a more powerful feature of TypeScript is the ability to create your own custom data types that describe the data structures and behavior in your applicaions. 
 
@@ -268,7 +274,7 @@ Because Todo is intended to describe only the data structure of a Todo item, we'
 
 Note: the actual implementations of these functions does not exist yet. The purpose of the interface is only to make sure that the parameter and return types of the methods on the object are valid. To create the funciton implementations we will need classes which will be covered later.
 
-## Using interfaces to describe funcitons
+### Using interfaces to describe funcitons
 
 If you are familiar with javascript then you know functions are objects. That means you can assign data and method properties to them just like you would any other object.
 
@@ -305,7 +311,7 @@ To specify that TypeScript treat a function as an instance of this interface you
  
 The casting syntax is like saying to TypeScript, "Hey, I don't care what type of object you think this is. It's definitely a jQuery type". In essence you override the basic type checking in place and some people suggest that as a reason the casting syntax should be used as little as possible.
 
-## Extending interface definitions
+### Extending interface definitions
 
 JavaScript is a dynamic language, so sometimes you might want to extend the data and method properties on an object on the fly. One example of this is the jQuery library that allows you to add custom functionality to it with its plugin model. We started to describe jQuery in the above snippets, but let's continue to add functionality to make it behave more like the real thing.
 
@@ -425,7 +431,7 @@ How you do this is by creating a new interface that shares the same name as the 
 
 You can have any number of interface extensions and they won't override previous interfaces of the same name. As a general practice, it is probably best to keep these extensions to code that you don't own/did not create.
 
-## Defining constant values with enums
+### Defining constant values with enums
 
 If you're familiar with enums in other languages such as Java or C#, enums in TS act is pretty much the same way. Enums are constants used to replace the "magic" strings and numbers you would otherwise use. To understand what we mean by magic let's rexamine our Todo code.
 
@@ -536,7 +542,7 @@ Pretty neat, huh? So let's refactor our Todo code from earlier to work with our 
 
 As you can see, this is a simple and elegant way to avoid hardcoded constants, which can make code brittle and confusing. 
 
-## Defining anonymous types
+### Defining anonymous types
 
 Now that we know how to explicitly declare interfaces, let's look at how to declare them inplicity in-line, anywhere that accepts a type. This approach is called an anonymous type.
 
@@ -568,3 +574,15 @@ Well why not fully embrace the dynamism of JavaScript and allow any parameter th
 ```
 
 This can make code that is more reusable, and sometimes easier to understand. However, there is still one problem which is there is nothing stopping users from passing in two parameters of different types. That means someone could pass in an array and add it's lengh to the length of a string. Which may not be considerable meaningfull, and maybe we want to restrict users from doing so. But this will be solved when we cover generics later. 
+
+## Classes
+
+### Understanding ProtoTypal Inheritance
+
+Before we mentioned that there are three ways to define custom types in TypeScript: Classes, interfaces, and enums. We covered how to work with interfaces and enums, and will now cover classes and how to use them to do general object-oriented things like inheritance, encapsulation, and abstraction. If you've been programming for some time in JavaScript, you probably know that TypeScript isn't the first agent to introduce classes to JavaScript. That would be ES6 class syntax. And if you're even more experienced in JavaScript you probably know that classes don't actually exist at all in JavaScript. The ES6 class syntax is merely syntactic sugar, and at the end of the day the only object-oriented programming that exists in JavaScript is prototype-based object-oriented programming.
+
+Let's give a quick overview of how OOP works in JavaScript, and how we achieve some of the same goals that class based OOP aims to achieve. 
+
+The primary method of code reuse in prototypal OOP is writing an object to house some base behavior, then creating instances of objects to delegate to this base object, called the prototype. This object, called the child object, has behavior that specialises on the behavior of the base object. When you want to access a property on the child object, JavaScript first looks on the child itself for the property identifier. But if JavaScript does not find the specified property name, it then tries to look for it on the object's prototype. And because object prototypes can have prototype objects themselves, JavaScript continues up the prototype chain until it either finds an object that contains the property you want to access, or reaches the ultimate ancesstor, in which case it throws a reference error stating it cannot find the property. 
+
+It is important to note the difference between prototypal inheritance and class based inheritance. In class inheritance all relationships are defined between classes themselves, not the objects. Classes exist as templates to produce objects, and each object receives a copy of the properties on the class, and any base classes. Whereas in JavaScript there are no classes, and this copy operation does not happen. 
