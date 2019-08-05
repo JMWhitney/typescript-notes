@@ -583,6 +583,269 @@ Before we mentioned that there are three ways to define custom types in TypeScri
 
 Let's give a quick overview of how OOP works in JavaScript, and how we achieve some of the same goals that class based OOP aims to achieve. 
 
-The primary method of code reuse in prototypal OOP is writing an object to house some base behavior, then creating instances of objects to delegate to this base object, called the prototype. This object, called the child object, has behavior that specialises on the behavior of the base object. When you want to access a property on the child object, JavaScript first looks on the child itself for the property identifier. But if JavaScript does not find the specified property name, it then tries to look for it on the object's prototype. And because object prototypes can have prototype objects themselves, JavaScript continues up the prototype chain until it either finds an object that contains the property you want to access, or reaches the ultimate ancesstor, in which case it throws a reference error stating it cannot find the property. 
+The primary method of code reuse in prototypal OOP is writing an object to house some base behavior, then creating instances of objects to delegate to this base object, called the prototype. This object, called the child object, has behavior that specialises on the behavior of the base object. When you want to access a property on the child object, JavaScript first looks on the child itself for the property identifier. But if JavaScript does not find the specified property name, it then tries to look for it on the object's prototype. And because object prototypes can have prototype objects themselves, JavaScript continues up the prototype chain until it either finds an object that contains the property you want to access, or reaches the ultimate ancesstor, in which case it throws a reference error stating it cannot find the given property. 
 
-It is important to note the difference between prototypal inheritance and class based inheritance. In class inheritance all relationships are defined between classes themselves, not the objects. Classes exist as templates to produce objects, and each object receives a copy of the properties on the class, and any base classes. Whereas in JavaScript there are no classes, and this copy operation does not happen. 
+Let's take a look at a common design pattern in JavaScript called the constructor design pattern, and add some prototypal inheritance to it.
+
+```javascript
+  // This is called the constructor. 
+  // It's responsible for assigning properties to new objects
+  function TodoService() {
+    this.todos = [];
+  }
+
+  // Specify some behavior on the object's prototype
+  TodoService.prototype.getAll = function() {
+    return this.todos;
+  }
+
+  // The constructor function must be used in conjunction with the "new" keyword.
+  // "new" rebinds the "this" keyword to refer to the object you are creating.
+  // If you didn't specify the new keyword, "this" would default to the global object.
+  // In the browser this would be the window object. In Node it's simply called global.
+  var service = new TodoService();
+
+  // Utilize the prototype's shared behavior method.
+  service.getAll() //Prints []
+```
+
+It is important to note the difference(s) between prototypal inheritance and class based inheritance. In classical inheritance all relationships are defined between classes themselves, not the objects. Classes exist as templates to produce objects, and each object instance receives a copy of the properties of its class, and any inherited classes. Whereas in JavaScript there is no such thing as a class, and this copy operation does not happen. This is important to note because the prototype can be changed during run time, and all objects that inherit the prototype will receive the altered behavior. Whereas this dynamic changing of behavior doesn't happen in class based hierarchies. To understand the differences between classical and prototypal inheritance in greater detail you can check out the book on object prototypes in the You Don't Know JS series by Kyle Simpson, found here: https://github.com/getify/You-Dont-Know-JS/tree/master/this%20%26%20object%20prototypes/ .
+
+## Defining a class
+
+Now that we got that out of the way, class syntax is a feature of TypeScript, as well as JavaScript ES6+, so let's cover it. Let's take a look at the snippet we defined above:
+
+```javascript
+  function TodoService() {
+    this.todos = [];
+  }
+
+  TodoService.prototype.getAll = function() {
+    return this.todos;
+  }
+
+  let service = new TodoService;
+  console.log(service.getAll) // []
+```
+
+and see how we would implement the same solution using ES6 class syntax in JavaScript.
+
+```javascript
+  class TodoService {
+    constructor() {
+      this.todos = []
+    }
+
+    getAll() {
+      return this.todos;
+    }
+  }
+
+  let service = new TodoService;
+  console.log(service.getAll) // []
+```
+
+You may be wondering, if classes don't exist in JS then what is the above code doing? It seems to be functioning the way that I would expect a class to be behave. Well let's look at the javascript that the above code compiles into.
+
+```javascript
+var TodoService = /** @class */ (function () {
+    function TodoService() {
+        this.todos = [];
+    }
+    TodoService.prototype.getAll = function () {
+        return this.todos;
+    };
+    return TodoService;
+}());
+
+var service = new TodoService;
+console.log(service.getAll); // []
+```
+
+Seem familiar? That's because this code is almost identical to the code we wrote using prototypal inheritance. The only difference is that the constructor definition is wrapped inside an IIFE to control scope and prevent you from accidentally polluting the global namespace. Neat.
+
+But we are here to talk about TypeScript, not just JavaScript. The class definition as it stands above will actually produce an error during TypeScript compilation.
+
+```typescript
+  class TodoService {
+  constructor() {
+    this.todos = [] // error TS2339: Property 'todos' does not exist on type 'TodoService'.
+  }
+
+  getAll() {
+    return this.todos; // error TS2339: Property 'todos' does not exist on type 'TodoService'.
+  }
+}
+```
+
+This happens because TypeScript prevents you from assigning a value to a property you never declared should exist. You do that by adding this line of code:
+
+```typescript
+class TodoService {
+
+  // Define the todos property to accept an array of Todo objects.
+  todos: Todo[];
+
+  constructor() {
+    this.todos = [] 
+  }
+
+  getAll() {
+    return this.todos; 
+  }
+}
+```
+
+Note that the line 
+```typescript
+  todos: Todo[];
+```
+
+Doesn't create the property todos. That happens in the constructor. You can combine the property declaration as well as the initialization on the same line by doing:
+
+```typescript
+  class TodoService {
+
+    // Define the todos property and initialize it to an empty array.
+    todos: Todo[] = [];
+
+    constructor() {
+      // this.todos = [] // This line becomes unnecessary.
+    }
+
+    getAll() {
+      return this.todos; 
+    }
+ }
+```
+
+This is a good way to define an initial property that is hard coded across all new instantiated objects of the same type. But it is often the case that you want to use the values that you pass into the constructor function to initialize the properties on your object. You do that in this way:
+
+```typescript
+  class TodoService {
+
+    // Define the todos property and initialize it to an empty array.
+    todos: Todo[];
+
+    constructor(todos: Todo[]) {
+      this.todos = todos;
+    }
+
+    getAll() {
+      return this.todos; 
+    }
+ }
+```
+
+In fact, this is such a common practice that TypeScript has syntactic sugar to define a constructor parameter and class property in one line using a access modifier such as 'private'.
+
+```typescript
+  class TodoService {
+    constructor(private todos: Todo[]) {}
+
+    getAll() {
+      return this.todos;
+    }
+  }
+```
+
+If we take a look at the code that this snippet compiles into:
+
+```javascript
+var TodoService = /** @class */ (function () {
+    function TodoService(todos) {
+        this.todos = todos;
+    }
+    TodoService.prototype.getAll = function () {
+        return this.todos;
+    };
+    return TodoService;
+}());
+```
+
+We find that it does the exact same thing as the code that defines a property, passes a value into the constructor, and assigns the property all on different lines. 
+
+## Applying static properties
+
+If you program long enough in class based OOP, you may come across situations where you want a piece of data to be shared and maintained across all instances of a class. That is a variable that is declared once per class, not object, and can be modified by any object that belongs to that class. This is referred to as a 'static' variable. 
+
+To give an example of why you would want to do this, let's consider our Todo service. Let's say we want to give each of our Todo items a unique identifier property, so that we can reference specific Todo items in our application. 
+
+A basic way to do this is to create a static variable that will keep track of the number of Todo items, update it whenever a Todo object is created or destroyed, and assign the Todo.id to the value of this number. So the first Todo will have an id of 1, the second will have an id of 2, and so on. 
+
+In languages like C#, Java, or C/C++ there exists the static keyword to create these variables. In JavaScript the way this was handled for a long time is to, believe it or not, create a variable like `var lastId = 0;` and place it on the global scope. But this is considered a very bad practice, especially if you are using generic identifiers like `var id = 0;`. How can you guarantee that none of the other files in your application, or any third party libraries that you use won't also place a variable `var id = 123;` on the global namespace or try to modify it? The answer is you can't, and you should try to pollute the global namespace as little as possible to avoid difficult to diagnose bugs. 
+
+So instead of placing this static variable in the global scope, it would be great if I could attach it to an object in its own protected scope. Moreover it would make sense to place this variable on the object (or function) that would use it the most. It would make sense, then, to attach any static variables or methods that you want to the constructor function. At any time, there is only one instance of the constructor, so there will only be one instance of the properties that you assign to it.
+
+Prior to ES6 class syntax that would look like this:
+
+```javascript
+function TodoService() {
+  ...
+}
+
+// Static data
+TodoService.lastId = 0;
+
+// Static method
+TodoService.getNextId = function() {
+
+  // Access static data
+  return TodoService.lastId += 1;
+}
+
+TodoService.prototype.add = function(todo) {
+  //Access static method
+  var newId = TodoService.getNextId();
+}
+```
+
+But that is with the ES5 syntax. ES6 class syntax adds syntactic sugar for this process and it looks like this:
+
+```javascript
+  class TodoService {
+    static lastId = 0;
+    
+    constructor(private todos: Todo[]) { }
+
+    add(todo) {
+      var newId = TodoService.getNextId();
+    }
+    getAll() {
+      return this.todos;
+    }
+  }
+
+  static getNextId() {
+      return TodoService.lastId += 1;
+    }
+
+  console.log(TodoService.lastId) // 0
+```
+
+and with TypeScript we can assign it type information just like any other class property.
+
+```typescript
+  class TodoService {
+
+    static lastId:number = 0;
+    
+    constructor(private todos: Todo[]) { }
+
+    add(todo: Todo) {
+      var newId = TodoService.getNextId();
+    }
+
+    getAll() {
+      return this.todos;
+    }
+
+    static getNextId() {
+      return TodoService.lastId += 1;
+    }
+  }
+
+  console.log(TodoService.lastId) // 0
+```
+
+While static methods can be helpful to centralize small pieces of logic across many components, static properties should be used as sparingly as possible. Even if they are attached to a class, and not the global namespace, they can make your code tightly coupled and brittle. That defeats the intent of OOP in the first place. 
