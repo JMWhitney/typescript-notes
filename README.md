@@ -947,6 +947,32 @@ let todo = new SmartTodo("Clean the gutters", TodoState.LowPriority);
 todo.state = TodoState.Completed; // "Todo must be HighPriority before being completed!"
 ``` 
 
-And now you can start to see how getters and setters can be useful in situations where you want to control the behavior of data properties.
+And now you can start to see how getters and setters can be useful in situations where you want to tightly control the modification of data properties.
 
+## Inherit behavior from a base class
 
+After talking about getter/setter methods, we will now talk about why some people prefer not to use them, and instead extract the logic its own utility/service classes. That's because often logic that may seem simple on the service may be more complex than you anticipate. You may also consider it conveinient to have all your related data mutators wrapped into one object, rather than across many different ones. 
+
+The previous example of conditionally setting a Todo state to completed is a good example to demonstrate this practice. If there is logic for the completed state, then it is probable that there would be logic to govern the other state changes as well. In that case you may want to implement the design pattern called the "state machine" to represent the logic for each of these state transitions as its own class. The exact implementation details of the state machine design pattern are outside the scope of these notes, but most of the state change classes we will work with here will look a lot like this class:
+
+```typescript
+  class TodoStateChanger {
+    constructor(private newState: TodoState) { }
+
+    canChangeState(todo: Todo): boolean {
+      return !!todo;
+    }
+
+    changeState(todo: Todo): Todo {
+      if(this.canChangeState(todo)) {
+        todo.state = this.newState;
+      }
+
+      return todo;
+    }
+  }
+```
+
+This class takes a TodoState as an argument to its constructor, has a method to make sure that a given Todo object is elligable to have its state changed, and has a method to change the state of a passed in Todo object if it passes the canChangeState method. 
+
+In a class based OOP language, like C# or Java, we would use the TodoStateChanger as a base class and have classes that inherit its properties as well as override the ones that we would like to specify. 
