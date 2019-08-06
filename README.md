@@ -848,4 +848,105 @@ and with TypeScript we can assign it type information just like any other class 
   console.log(TodoService.lastId) // 0
 ```
 
-While static methods can be helpful to centralize small pieces of logic across many components, static properties should be used as sparingly as possible. Even if they are attached to a class, and not the global namespace, they can make your code tightly coupled and brittle. That defeats the intent of OOP in the first place. 
+While static methods can be helpful to centralize small pieces of logic across many components, static properties should be used sparingly. Even if they are attached to a class, and not the global namespace, they can make your code tightly coupled and brittle and that defeats a lot of the intent of OOP in the first place. 
+
+## Making properties smarter with accessors
+
+One of the core principles behind object oriented programming is the concept of encapsulation. In theory this means that objects should contain and protect all the data members/properties that they need to operate, and only expose as little information to the outside world as possible through defined accessor methods. These accessors are called getters and setters and they do probably what you can imagine they do. 
+
+Getters retrieve a specified data property, and setters mutate data properties in only the specific ways that you define. Any interaction with the private data properties outside these accessor methods should be illegal, otherwise they are free to be mutated in any way anywhere in your program. The intended goal is to only expose and mutate your data in predicable, well defined pathways such that they do not get left in inconsistent states and debugging errors is easier. 
+
+Here is an example with the Todo app we have been working with so far:
+
+```typescript
+  interface Todo {
+  name: string;
+  state: TodoState;
+}
+
+enum TodoState {
+  Completed = 1,
+  HighPriority,
+  LowPriority,
+  Cancelled
+}
+
+var todo = {
+  name: "Clean the gutters",
+  get state() {
+    return this._state;
+  },
+  set state(newState) {
+    this._state = newState;
+  }
+}
+
+// Access state that hasn't been assigned
+console.log(todo.state) // undefined
+
+// Assign state with setter
+console.log(todo.state = TodoState.LowPriority); // 3
+
+// Retrieve state with getter
+console.log(todo.state); // 3 
+```
+
+But as it stands now our setter method isn't very useful because it doesn't perform any input restrictions. So maybe we want our setter to impose some restrictions, like a todo cannot be set to complete if it is not a high priority. ( Otherwise you perhaps, philosophically, shouldn't be working on low priority tasks while there are high priority tasks. )
+
+```typescript
+  var todo = {
+    name: "Clean the gutters",
+    get state() {
+      return this._state;
+    }
+
+    set state(newState) {
+
+      // Trying to complete a 
+      if( newState === TodoState.Completed && this._state !== TodoState.HighPriority  ) {
+        // Exit with error 
+        throw "Todo must be HighPriority before being completed"
+      }
+
+      // Otherwise set the state
+      this._state = newState;
+    }
+  }
+
+  todo.state = TodoState.LowPriority; // 3
+  todo.state = TodoState.Completed; // "Todo must be HighPriority before being completed"
+```
+
+So it's at this point that a confession should be made. It doesn't make a lot of sense to place these accessor methods onto object literals. But this example is just to demonstrate how they work, and that you can put them on object literals. Normally they would be placed on the 'class' that you instantiate the object with. So let's make a class to represent our todo items and copy the logic there.
+
+```typescript
+class SmartTodo {
+
+  constructor(private name: string, private _state: TodoState) {
+  }
+
+  get state() {
+    return this._state;
+  }
+
+  set state(newState) {
+    // Trying to complete a 
+    if( newState === TodoState.Completed && this._state !== TodoState.HighPriority  ) {
+      // Exit with error 
+      throw "Todo must be HighPriority before being completed"
+    }
+
+    // Otherwise set the state
+    this._state = newState;
+  }
+}
+
+// Instantiate todo, with a low priority
+let todo = new SmartTodo("Clean the gutters", TodoState.LowPriority);
+
+todo.state = TodoState.Completed; // "Todo must be HighPriority before being completed!"
+``` 
+
+And now you can start to see how getters and setters can be useful in situations where you want to control the behavior of data properties.
+
+

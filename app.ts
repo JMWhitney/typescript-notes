@@ -1,27 +1,35 @@
-// enum TodoState {
-//   Completed = 0,
-//   HighPriority,
-//   LowPriority,
-//   Cancelled,
-// }
+interface Todo {
+  name: string;
+  state: TodoState;
+}
 
-// interface Todo {
-//   name: string;
-//   state: TodoState;
-// }
+enum TodoState {
+  Completed = 1,
+  HighPriority,
+  LowPriority,
+  Cancelled
+}
 
-class TodoService {
-  constructor(private todos: Todo[]) {}
+class SmartTodo {
 
-  getAll() {
-    return this.todos;
+  constructor(private name: string, private _state: TodoState) {
+  }
+
+  get state() {
+    return this._state;
+  }
+
+  set state(newState) {
+    // Trying to complete a 
+    if( newState === TodoState.Completed && this._state !== TodoState.HighPriority  ) {
+      // Exit with error 
+      throw "Todo must be HighPriority before being completed"
+    }
+
+    // Otherwise set the state
+    this._state = newState;
   }
 }
 
-// let todo1 :Todo = { name: 'Clean gutters', state: TodoState.HighPriority };
-// let todo2 :Todo = { name: 'Wash The Dishes', state: TodoState.LowPriority }
-
-// let todoList = [todo1, todo2];
-
-// let service = new TodoService(todoList);
-// console.log(service.getAll) // [todo1, todo2]
+let todo = new SmartTodo("Clean the gutters", TodoState.LowPriority);
+todo.state = TodoState.Completed;
