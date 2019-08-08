@@ -976,3 +976,12 @@ The previous example of conditionally setting a Todo state to completed is a goo
 This class takes a TodoState as an argument to its constructor, has a method to make sure that a given Todo object is elligable to have its state changed, and has a method to change the state of a passed in Todo object if it passes the canChangeState method. 
 
 In a class based OOP language, like C# or Java, we would use the TodoStateChanger as a base class and have classes that inherit its properties as well as override the ones that we would like to specify. 
+
+Thankfully there is a way to do this with the ES6 class syntax, using the keyword extends. So now let's create a class that inherits these base properties, and that implements the 'completed' state change that we defined in the getter/setter example.
+
+```typescript
+  class CompleteTodoStateChanger extends TodoStateChanger {
+
+  }
+```
+Technically this is all you have to do to create a new class called CompleteTodoStateChanger, that has access to all the properties defined on the 

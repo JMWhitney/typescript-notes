@@ -31,5 +31,25 @@ class SmartTodo {
   }
 }
 
+class TodoStateChanger {
+  constructor(private newState: TodoState) { }
+
+  canChangeState(todo: Todo): boolean {
+    return !!todo;
+  }
+
+  changeState(todo: Todo): Todo {
+    if(this.canChangeState(todo)) {
+      todo.state = this.newState;
+    }
+
+    return todo;
+  }
+}
+
+class CompleteTodoStateChanger extends TodoStateChanger {
+
+}
+
 let todo = new SmartTodo("Clean the gutters", TodoState.LowPriority);
 todo.state = TodoState.Completed;
