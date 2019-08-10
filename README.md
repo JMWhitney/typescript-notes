@@ -977,7 +977,7 @@ This class takes a TodoState as an argument to its constructor, has a method to 
 
 In a class based OOP language, like C# or Java, we would use the TodoStateChanger as a base class and have classes that inherit its properties as well as override the ones that we would like to specify. 
 
-Thankfully there is a way to do this with the ES6 class syntax, using the keyword 'extends'. So now let's create a class that inherits these base properties, and that implements the 'completed' state change that we defined in the getter/setter example.
+Thankfully there is a way to do this with the ES6 class syntax, using the keyword `extends`. So now let's create a class that inherits these base properties, and that implements the 'completed' state change that we defined in the getter/setter example.
 
 ```typescript
   class CompleteTodoStateChanger extends TodoStateChanger {
@@ -1000,7 +1000,7 @@ This is suitable for some situations, but not for the example we are working wit
 
 So we will create a new constructor that doesn't allow the ability to pass in a TodoState. 
 
-One thing to keep in mind when doing this is that when defining a constructor on a derived class, you must also call the constructor of the base class. You do this with the "super" keyword.
+One thing to keep in mind when doing this is that when defining a constructor on a derived class, you must also call the constructor of the base class. You do this with the `super` keyword.
 
 ```typescript
   class CompleteTodoStateChanger extends TodoStateChanger {
@@ -1024,7 +1024,7 @@ So now that we have that out of the way, let's override the default behaviors in
   }
 ```
 
-Notice the use of the super keyword in our canChangeState definition. Here super is not being used to reference the parent class's constructor, but rather to access the parent's object properties. In this situation we don't want to completely override the canChangeState method, rather we want to extend its definition to be more specific. 
+Notice the use of the `super` keyword in our canChangeState definition. Here super is not being used to reference the parent class's constructor, but rather to access the parent's object properties. In this situation we don't want to completely override the canChangeState method, rather we want to extend its definition to be more specific. 
 
 ## Implementing an Abstract Class
 
@@ -1032,7 +1032,7 @@ So far most of the class syntax we have talked about has included standard ES6 f
 
 In our previous example we had the base class TodoStateChanger, intended to be extended for each of the states that we want to create logic for. But let's say we never intended to create a direct instantiation of it. Right now there is nothing preventing us from creating a TodoStateChanger object, even if it doesn't make much sense to do so.
 
-This is actually a simple fix. TypeScript offers us the "abstract" keyword to be placed before class definitions to signify our intent.
+This is actually a simple fix. TypeScript offers us the `abstract` keyword to be placed before class definitions to signify our intent.
 
 ```typescript
   abstract class TodoStateChanger {
@@ -1055,7 +1055,7 @@ This is actually a simple fix. TypeScript offers us the "abstract" keyword to be
   new TodoStateChanger(); // Cannot create an instance of the abstract class 'TodoStateChanger'.
 ```
 
-Moreover, the "abstract" keywork can be used on any methods that we want to signify must be overridden by any child classes. 
+Moreover, the `abstract` keywork can be used on any methods that we want to signify must be overridden by any child classes. 
 
 It would make sense in this example that we want every child class of TodoStateChanger to implement its own canChangeState method to govern the logic with which we state changes. That would look like this:
 
@@ -1078,7 +1078,7 @@ It would make sense in this example that we want every child class of TodoStateC
   }
 ```
 
-Notice that with the abstract keyword infront of a class method the implementation is no longer needed and is removed. This is because it is expected that the child class will completely override that behavior and inherit none of it from the parent class. 
+Notice that with the `abstract` keyword infront of a class method the implementation is no longer needed and is removed. This is because it is expected that the child class will completely override that behavior and inherit none of it from the parent class. 
 
 You may remember that our CompleteTodoStateChanger class defined its canChangeState method to reference its parent canChangeState method using super. Well that doesn't make sense anymore, and TypeScript will throw an error because the method doesn't exist anymore. Let's fix that.
 
@@ -1096,17 +1096,17 @@ You may remember that our CompleteTodoStateChanger class defined its canChangeSt
 
 ## Controlling visibility with access modifiers
 
-Previously in the section on defining a class, we briefly talked about access modifier and the private keyword. If you're familiar with traditionally class based languages then you are probably aware that there are certain keywords that modify whether or not certain members of a class are accessable outside of that class or not. 
+Previously in the section on defining a class, we briefly talked about access modifier and the `private` keyword. If you're familiar with traditionally class based languages then you are probably aware that there are certain keywords that modify whether or not certain members of a class are accessable outside of that class or not. 
 
 Access modifiers can be placed before any class member, a data member, a function member, a constructor, even static members and getter/setter methods. Although the same access modifier must be placed on any getter/setter of the same name. 
 
-TypeScript offers three access modifying keywords. Private, public, and protected. 
+TypeScript offers three access modifying keywords. `Private`, `public`, and `protected`. 
 
-The private keyword is the most restrictive modifier. It disallows the specificed member from being accessed from any object that isn't a direct instantiation of the class. Even if the object an instance of an inherited or derived class.
+The `private` keyword is the most restrictive modifier. It disallows the specificed member from being accessed from any object that isn't a direct instantiation of the class. Even if the object an instance of an inherited or derived class.
 
-The protected keyword is similar to the private keyword, except it allows access to objects that are instances of related classes.
+The `protected` keyword is similar to the `private` keyword, except it allows access to objects that are instances of related classes.
 
-The public modifier allows access to a member from any place or object in your code. In other words it describes the default behavior of JavaScript (and TypeScript) so you probably won't see it much. However, one place you may see it frequently used is in the parameters to a constructor to create an inline class property, just like we did but with the private keyword.
+The `public` modifier allows access to a member from any place or object in your code. In other words it describes the default behavior of JavaScript (and TypeScript) so you probably won't see it much. However, one place you may see it frequently used is in the parameters to a constructor to create an inline class property, just like we did but with the `private` keyword.
 
 ```typescript
   class SmartTodo {
@@ -1118,7 +1118,7 @@ The public modifier allows access to a member from any place or object in your c
   }
 ```
 
-With the public keyword this becomes:
+With the `public` keyword this becomes:
 
 ```typescript
   class SmartTodo {
@@ -1129,4 +1129,241 @@ With the public keyword this becomes:
 
 And the same thing can be done with any of the keywords depending on the access modification that you desire. 
 
-At this point it is also important to point out that JavaScript doesn't support private object properties. And TypeScript compiles into JavaScript so it can't change the default behavior of JavaScript. As with interfaces and typechecking, this preventative access is only evaluated during compilation time, and has no effect at run time. But that doesn't mean it isn't worth using. One of the purposes of statically typed code is to convey intent, and JavaScript developers would invent ways to signify intent with code conventions. One example is to place an underscore ( _ ) before the variable name to indicate it is a private variable. 
+At this point it is also important to point out that JavaScript doesn't support private object properties. And TypeScript compiles into JavaScript so it can't change the default behavior of JavaScript. As with interfaces and typechecking, this preventative access is only evaluated during compilation time, and has no effect at run time. But that doesn't mean it isn't worth using. One of the purposes of statically typed code is to convey intent, and JavaScript developers would invent ways to signify intent with code conventions. One example is to place an underscore `_` before the variable name to indicate it is intended to be a private member.
+
+## Implementing interfaces
+
+Previously we talked about how to define interfaces to ensure the objects you reference have the members you expect them to. But the primary reason for the existance of interfaces in is to attach them to classes to ensure that they have the members that you intend for them to have.
+
+Before we discuss this 
+
+Throughout these notes we have constructed several different classes and interfaces, notably:
+
+```typescript
+  interface ITodoService {
+    add(todo: Todo): Todo;
+    delete(todoId: number): void;
+    getAll(): Todo[];
+    getById(todoId: number): Todo;
+  }
+
+  interface Todo {
+    name: string;
+    state: TodoState;
+  }
+
+  enum TodoState {
+    Completed = 1,
+    HighPriority,
+    LowPriority,
+    Cancelled
+  }
+```
+
+and the class:
+
+```typescript
+  class TodoService {
+
+    private static _lastId: number = 0;
+
+    get nextId() {
+      return TodoService._lastId += 1;
+    }
+
+    constructor(private todos: Todo[]) {
+    }
+
+    add(todo: Todo) {
+      var newId = this.nextId;
+    }
+
+    getAll() {
+      return this.todos;
+    }
+  }
+```
+
+From the name, you can probably infer that we want the TodoService class to implement the ITodoService interface. But at this moment there is nothing explicitly linking the two. To do this you simply place the keyword "implements" after the class declaration and follow it up with the identifier of the interface you want to implement.
+
+```typescript
+
+interface ITodoService {
+    add(todo: Todo): Todo;
+    delete(todoId: number): void;
+    getAll(): Todo[];
+    getById(todoId: number): Todo;
+  }
+
+  interface Todo {
+    name: string;
+    state: TodoState;
+  }
+
+  class TodoService implements ITodoService { 
+
+    private static _lastId: number = 0;
+
+    get nextId() {
+      return TodoService._lastId += 1;
+    }
+
+    constructor(private todos: Todo[]) {
+    }
+
+    add(todo: Todo) {
+      var newId = this.nextId;
+    } 
+
+    getAll() {
+      return this.todos;
+    }
+  }
+```
+
+Right away TypeScript starts enforcing the behavior specified on the interface, and throws an error stating there are incompatible return types defined by the `add` method on the class and the `add` method defined on the interface.
+
+So let's fix that by updating our Todo object to contain an id number, and change the `add` method to set the id of the passed in Todo object, push it onto the array of stored Todos, and then return the added Todo.
+
+```typescript
+  interface Todo {
+    id: number;
+    name: string;
+    state: TodoState;
+  }
+```
+
+```typescript
+interface ITodoService {
+    add(todo: Todo): Todo;
+    delete(todoId: number): void;
+    getAll(): Todo[];
+    getById(todoId: number): Todo;
+  }
+```
+
+```typescript
+  class TodoService implements ITodoService { // Class 'TodoService' incorrecly implements interface 'ITodoService'.
+  // Type 'TodoService' is missing the following properties from type 'ITodoService': delete, getById
+
+    private static _lastId: number = 0;
+
+    get nextId(): number {
+      return TodoService._lastId += 1;
+    }
+
+    constructor(private todos: Todo[]) {
+    }
+
+    add(todo: Todo): Todo {
+      todo.id = this.nextId;
+
+      this.todos.push(todo);
+
+      return todo;
+    } 
+
+    getAll():Todo[] {
+      return this.todos;
+    }
+  }
+```
+
+The error we received on the `add` method has vanished, but has been replaced with an error stating TypeScript could not find the properties 'delete' and 'getById'. So let's add that now:
+
+```typescript
+  class TodoService implements ITodoService { 
+
+    private static _lastId: number = 0;
+
+    get nextId(): number {
+      return TodoService._lastId += 1;
+    }
+
+    constructor(private todos: Todo[]) {
+    }
+
+    add(todo: Todo): Todo {
+      todo.id = this.nextId;
+
+      this.todos.push(todo);
+
+      return todo;
+    } 
+
+    getAll():Todo[] {
+      return this.todos;
+    }
+
+    getById(todoId: number): Todo {
+      // Return only the Todos with id == todoId
+      var filtered = this.todos.filter(x => x.id == todoId);
+
+      // If we found it, return it. 
+      if( filtered.length ) {
+        return filtered[0];
+      }
+
+      //Otherwise return nothing.
+      return null;
+    }
+
+    delete(todoId: number): void {
+      //Obtain reference to the object we want to remove
+      var toDelete = this.getById(todoId);
+      
+      //Find its position in the list of todos
+      var deletedIndex = this.todos.indexOf(toDelete);
+
+      //Remove it from the list
+      this.todos.splice(deletedIndex, 1);
+    }
+  }
+```
+
+Great, now TypeScript is not giving us any errors. However, there is one problem left. In the `getAll` function, we return a reference to the actual stored list of todos, because JavaScript passes objects and arrays by reference. So there is nothing stopping an outside party from directly modifying the contents of our todos, so we should change that for security reasons. 
+
+```typescript
+  // ...
+
+  getAll():Todo[] {
+    var clone = JSON.stringify(this.todos);
+    return JSON.parse(clone);
+  }
+
+  // ...
+```
+
+One thing to note is that this performs a lossy deep copy. That means some properties that don't have JSON.stringify equivalencies like `undefined`, `Infinity`, circular references, or functions don't get copied. If you need a complete deep copy you should probably use a library defined deep copy like lodash's _.cloneDeep().
+
+Other than that the class now successfully implements the `ITodoService` interface. If the class members get modified so that they receive the wrong parameters, or return the wrong type TypeScript will throw an error. 
+
+And if you're wondering, it is possible for a class to implement more than one interface. Simply delimit each interface you want to implement after the `implements` keyword with a commma.
+
+```typescript
+  interface IIdGenerator {
+    nextId: number;
+  }
+
+  interface ITodoService {
+    add(todo: Todo): Todo;
+    delete(todoId: number): void;
+    getAll(): Todo[];
+    getById(todoId: number): Todo;
+  }
+
+  class TodoService implements ITodoService, IIdGenerator {
+
+    private static _lastId: number = 0;
+
+    get nextId(): number { ... }
+    constructor(private todos: Todo[]) { }
+    add(todo: Todo): Todo { ... }
+    getAll():Todo[] { ... }
+    getById(todoId: number): Todo { ... }
+    delete(todoId: number): void { ... }
+
+  }
+```
+
+The class here successfully implements both ITodoService and IIdGenerator, because it contains all the members defined on both interfaces. 

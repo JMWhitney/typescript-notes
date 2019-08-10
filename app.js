@@ -1,16 +1,3 @@
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 var TodoState;
 (function (TodoState) {
     TodoState[TodoState["Completed"] = 1] = "Completed";
@@ -18,50 +5,43 @@ var TodoState;
     TodoState[TodoState["LowPriority"] = 3] = "LowPriority";
     TodoState[TodoState["Cancelled"] = 4] = "Cancelled";
 })(TodoState || (TodoState = {}));
-var SmartTodo = /** @class */ (function () {
-    function SmartTodo(name, _state) {
-        this.name = name;
-        this._state = _state;
+var TodoService = /** @class */ (function () {
+    function TodoService(todos) {
+        this.todos = todos;
     }
-    Object.defineProperty(SmartTodo.prototype, "state", {
+    Object.defineProperty(TodoService.prototype, "nextId", {
         get: function () {
-            return this._state;
-        },
-        set: function (newState) {
-            // Trying to complete a 
-            if (newState === TodoState.Completed && this._state !== TodoState.HighPriority) {
-                // Exit with error 
-                throw "Todo must be HighPriority before being completed";
-            }
-            // Otherwise set the state
-            this._state = newState;
+            return TodoService._lastId += 1;
         },
         enumerable: true,
         configurable: true
     });
-    return SmartTodo;
-}());
-var TodoStateChanger = /** @class */ (function () {
-    function TodoStateChanger(newState) {
-        this.newState = newState;
-    }
-    TodoStateChanger.prototype.canChangeState = function (todo) {
-        return !!todo;
-    };
-    TodoStateChanger.prototype.changeState = function (todo) {
-        if (this.canChangeState(todo)) {
-            todo.state = this.newState;
-        }
+    TodoService.prototype.add = function (todo) {
+        todo.id = this.nextId;
+        this.todos.push(todo);
         return todo;
     };
-    return TodoStateChanger;
+    TodoService.prototype.getAll = function () {
+        return this.todos;
+    };
+    TodoService.prototype.getById = function (todoId) {
+        // Return only the Todos with id == todoId
+        var filtered = this.todos.filter(function (x) { return x.id == todoId; });
+        // If we found it, return it. 
+        if (filtered.length) {
+            return filtered[0];
+        }
+        //Otherwise return nothing.
+        return null;
+    };
+    TodoService.prototype.delete = function (todoId) {
+        //Obtain reference to the object we want to remove
+        var toDelete = this.getById(todoId);
+        //Find its position in the list of todos
+        var deletedIndex = this.todos.indexOf(toDelete);
+        //Remove it from the list
+        this.todos.splice(deletedIndex, 1);
+    };
+    TodoService._lastId = 0;
+    return TodoService;
 }());
-var CompleteTodoStateChanger = /** @class */ (function (_super) {
-    __extends(CompleteTodoStateChanger, _super);
-    function CompleteTodoStateChanger() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    return CompleteTodoStateChanger;
-}(TodoStateChanger));
-var todo = new SmartTodo("Clean the gutters", TodoState.LowPriority);
-todo.state = TodoState.Completed;
