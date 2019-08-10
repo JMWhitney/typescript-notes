@@ -38,7 +38,8 @@ class TodoService implements ITodoService {
   } 
 
   getAll():Todo[] {
-    return this.todos;
+    var clone = JSON.stringify(this.todos);
+    return JSON.parse(clone);
   }
 
   getById(todoId: number): Todo {
@@ -65,3 +66,10 @@ class TodoService implements ITodoService {
     this.todos.splice(deletedIndex, 1);
   }
 }
+
+function clone<T>(value: T): T {
+    let serialized = JSON.stringify(value);
+    return JSON.parse(serialized);
+}
+
+clone('hello');

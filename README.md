@@ -2,7 +2,7 @@
 
 TypeScript is a superset of JavaScript, meaning every TypeScript program is transpiled into plain JavaScript. This also means every JavaScript program is also a valid TypeScript program. 
 
-### JavaScript and its typing system
+## JavaScript and its typing system
 
 JavaScript often relies on a principle called "Duck" typing, because it has no way to define its own data types like traditional class-based object oriented programming languages. The principle behind duck typing is that if it looks like a duck, walks like a duck, and quacks like a duck, it is probably a duck. The metaphore here is that if an object is called "Duck", and contains a property quack() then it is probably a duck type. 
 
@@ -611,7 +611,7 @@ Let's take a look at a common design pattern in JavaScript called the constructo
 
 It is important to note the difference(s) between prototypal inheritance and class based inheritance. In classical inheritance all relationships are defined between classes themselves, not the objects. Classes exist as templates to produce objects, and each object instance receives a copy of the properties of its class, and any inherited classes. Whereas in JavaScript there is no such thing as a class, and this copy operation does not happen. This is important to note because the prototype can be changed during run time, and all objects that inherit the prototype will receive the altered behavior. Whereas this dynamic changing of behavior doesn't happen in class based hierarchies. To understand the differences between classical and prototypal inheritance in greater detail you can check out the book on object prototypes in the You Don't Know JS series by Kyle Simpson, found here: https://github.com/getify/You-Dont-Know-JS/tree/master/this%20%26%20object%20prototypes/ .
 
-## Defining a class
+### Defining a class
 
 Now that we got that out of the way, class syntax is a feature of TypeScript, as well as JavaScript ES6+, so let's cover it. Let's take a look at the snippet we defined above:
 
@@ -765,7 +765,7 @@ var TodoService = /** @class */ (function () {
 
 We find that it does the exact same thing as the code that defines a property, passes a value into the constructor, and assigns the property all on different lines. 
 
-## Applying static properties
+### Applying static properties
 
 If you program long enough in class based OOP, you may come across situations where you want a piece of data to be shared and maintained across all instances of a class. That is a variable that is declared once per class, not object, and can be modified by any object that belongs to that class. This is referred to as a 'static' variable. 
 
@@ -850,7 +850,7 @@ and with TypeScript we can assign it type information just like any other class 
 
 While static methods can be helpful to centralize small pieces of logic across many components, static properties should be used sparingly. Even if they are attached to a class, and not the global namespace, they can make your code tightly coupled and brittle and that defeats a lot of the intent of OOP in the first place. 
 
-## Making properties smarter with accessors
+### Making properties smarter with accessors
 
 One of the core principles behind object oriented programming is the concept of encapsulation. In theory this means that objects should contain and protect all the data members/properties that they need to operate, and only expose as little information to the outside world as possible through defined accessor methods. These accessors are called getters and setters and they do probably what you can imagine they do. 
 
@@ -949,7 +949,7 @@ todo.state = TodoState.Completed; // "Todo must be HighPriority before being com
 
 And now you can start to see how getters and setters can be useful in situations where you want to tightly control the modification of data properties.
 
-## Inherit behavior from a base class
+### Inherit behavior from a base class
 
 After talking about getter/setter methods, we will now talk about why some people prefer not to use them, and instead extract the logic its own utility/service classes. That's because often logic that may seem simple on the service may be more complex than you anticipate. You may also consider it conveinient to have all your related data mutators wrapped into one object, rather than across many different ones. 
 
@@ -1026,7 +1026,7 @@ So now that we have that out of the way, let's override the default behaviors in
 
 Notice the use of the `super` keyword in our canChangeState definition. Here super is not being used to reference the parent class's constructor, but rather to access the parent's object properties. In this situation we don't want to completely override the canChangeState method, rather we want to extend its definition to be more specific. 
 
-## Implementing an Abstract Class
+### Implementing an Abstract Class
 
 So far most of the class syntax we have talked about has included standard ES6 features, and is not exclusive to TypeScript itself. But one feature that ES6+ does not support but TypeScript does is the concept of an abstract class. That is, a class that exists for the sole purpose of being a parent class, and won't have any direct instantiations.
 
@@ -1094,7 +1094,7 @@ You may remember that our CompleteTodoStateChanger class defined its canChangeSt
   }
 ```
 
-## Controlling visibility with access modifiers
+### Controlling visibility with access modifiers
 
 Previously in the section on defining a class, we briefly talked about access modifier and the `private` keyword. If you're familiar with traditionally class based languages then you are probably aware that there are certain keywords that modify whether or not certain members of a class are accessable outside of that class or not. 
 
@@ -1131,7 +1131,7 @@ And the same thing can be done with any of the keywords depending on the access 
 
 At this point it is also important to point out that JavaScript doesn't support private object properties. And TypeScript compiles into JavaScript so it can't change the default behavior of JavaScript. As with interfaces and typechecking, this preventative access is only evaluated during compilation time, and has no effect at run time. But that doesn't mean it isn't worth using. One of the purposes of statically typed code is to convey intent, and JavaScript developers would invent ways to signify intent with code conventions. One example is to place an underscore `_` before the variable name to indicate it is intended to be a private member.
 
-## Implementing interfaces
+### Implementing interfaces
 
 Previously we talked about how to define interfaces to ensure the objects you reference have the members you expect them to. But the primary reason for the existance of interfaces in is to attach them to classes to ensure that they have the members that you intend for them to have.
 
@@ -1367,3 +1367,62 @@ And if you're wondering, it is possible for a class to implement more than one i
 ```
 
 The class here successfully implements both ITodoService and IIdGenerator, because it contains all the members defined on both interfaces. 
+
+
+## Generics
+
+### Introducing generics
+
+Throughout these notes we've discussed using TypeScript to implement a number of object oriented principles that are typically found in class-based statically typed languages like C# or Java. Another one of these principles are generics. Generics are a way to create functions and classes that define a behavior that can be used across many different types while retaining the information about that type. If that sounds confusing then let's look at an example.
+
+```typescript
+  function clone(value) {
+    let serialized = JSON.stringify(value);
+    return JSON.parse(serialized);
+  }
+```
+
+Here is a function whose intent is to perform a deep copy on an object. (Coincidentally it looks a lot like the `getAll` method from our `TodoService` class). The return value from the call to `JSON.stringify` is simply a JSON string representing object and the properties it contains. But at this point information about the original object type is lost. When the JSON string gets parsed to form a new object, there's no way for TypeScript to infer anything about the original object type. But it sure would be nice to guarantee that the return value is of the same type as the original object no matter what type of object is passed in.  
+
+Using generics, we can solve two problems at once. Not only can we give TypeScript the type information it needs to determine the return type, we can reuse this code for any arbitrary types throughout our application.
+
+The way to specify a generic is by using left and right angle brackets after the function name, but before the parameter parantheses like this: 
+
+```typescript
+  function clone<T>(value){
+    let serialized = JSON.stringify(value);
+    return JSON.parse(serialized);
+  }
+```
+
+What this does is tell TypeScript that you will be using a generic type in this function, and you will be refering to that type by the name `T`. Note that the indentifier `T` is used here simply by convention. The identifier can be any valid variable name. You can then use the generic type throughout the function anywhere that you would specify a regular type. 
+
+```typescript
+  function clone<T>(value: T): T {
+    let serialized = JSON.stringify(value);
+    return JSON.parse(serialized);
+  }
+```
+
+Here we specify that the function `clone` accepts a parameter of arbitrary type `T` and that it also must return that same type. The generic gets evaluated whenever the function is called, and changes depending on you use it.
+
+```typescript
+  clone('Hello World!'); // TypeScript: function clone<string>(value: string): string
+  clone(123); // TypeScript: function clone<number>(value: number): number
+```
+
+When we pass in a string, TypeScript automatically updates `<T>` to be a string type, and when we pass in a number it updates `<T>` to be a number type. And of course they work with custom defined types, and even anonymous types. 
+
+```typescript
+  var todo: Todo = {
+    id: 1,
+    name: 'Pick up drycleaning',
+    state: TodoState.HighPriority
+  };
+
+  clone(todo) // TypeScript: clone<Todo>(value: Todo): Todo
+
+  clone({ name: 'Justin' }) // TypeScript function clone<{name: string}>(value: {name: string}): {name: string}
+```
+
+Generics can be a powerful way to reduce duplicated code where the only difference is typing. 
