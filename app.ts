@@ -1,75 +1,26 @@
-interface Todo {
-  id: number;
-  name: string;
-  state: TodoState;
+class KeyValuePair<TKey, TValue> {
+  constructor(
+    public key: TKey,
+    public value: TValue
+  ) {}
 }
 
-enum TodoState {
-  Completed = 1,
-  HighPriority,
-  LowPriority,
-  Cancelled
-}
+  let pair1 = new KeyValuePair<number, string>(1, 'First');
+  let pair2 = new KeyValuePair<string, Date>('Second', new Date(Date.now()));
+  let pair3 = new KeyValuePair<number, string>(3, 'Third');
 
-interface ITodoService {
-  add(todo: Todo): Todo;
-  delete(todoId: number): void;
-  getAll(): Todo[];
-  getById(todoId: number): Todo;
-}
+  class KeyValuePairPrinter<T, U> {
 
-class TodoService implements ITodoService { 
+    //Pass reference to an array of key-value pairs of type T and U.
+    constructor(private pairs: KeyValuePair<T, U>[]) { }
 
-  private static _lastId: number = 0;
-
-  get nextId(): number {
-    return TodoService._lastId += 1;
-  }
-
-  constructor(private todos: Todo[]) {
-  }
-
-  add(todo: Todo): Todo {
-    todo.id = this.nextId;
-
-    this.todos.push(todo);
-
-    return todo;
-  } 
-
-  getAll():Todo[] {
-    var clone = JSON.stringify(this.todos);
-    return JSON.parse(clone);
-  }
-
-  getById(todoId: number): Todo {
-    // Return only the Todos with id == todoId
-    var filtered = this.todos.filter(x => x.id == todoId);
-
-    // If we found it, return it. 
-    if( filtered.length ) {
-      return filtered[0];
+    //Iterate through the array and print each key-value property.
+    print() {
+      for(let p of this.pairs) {
+        console.log(`${p.key}: ${p.value}`)
+      }
     }
-
-    //Otherwise return nothing.
-    return null;
   }
 
-  delete(todoId: number): void {
-    //Obtain reference to the object we want to remove
-    var toDelete = this.getById(todoId);
-    
-    //Find its position in the list of todos
-    var deletedIndex = this.todos.indexOf(toDelete);
-
-    //Remove it from the list
-    this.todos.splice(deletedIndex, 1);
-  }
-}
-
-function clone<T>(value: T): T {
-    let serialized = JSON.stringify(value);
-    return JSON.parse(serialized);
-}
-
-clone('hello');
+  var printer = new KeyValuePairPrinter([ pair1, pair3 ]); 
+  printer.print(); // 1: 'First' 3: 'Third'

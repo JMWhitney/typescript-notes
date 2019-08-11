@@ -1426,3 +1426,92 @@ When we pass in a string, TypeScript automatically updates `<T>` to be a string 
 ```
 
 Generics can be a powerful way to reduce duplicated code where the only difference is typing. 
+
+## Creating generic classes
+
+Previously we defined how to define generics in functions, but that is not the only place where they can be used. You can apply them to classes too. In fact we've already used a generic class in action without realizing it. Among others, TypeScript handles the built in JavaScript array type as a generic class. Previously we used this syntax to indicate an array of a specific type:
+
+```typescript
+  var array: number[] = [1, 2, 3];
+```
+
+But you can also use a different syntax that make it more explicit that the built in array uses a generic type.
+
+```typescript
+  var array: Array<number> = [1, 2, 3];
+```
+
+The two syntaxes presented are exactly, functionally equivalent. The only difference is that the first syntax is slightly shorter. 
+
+Another situation where generics come in handy is the typed key value pair class. It looks like this:
+
+```typescript
+  class KeyValuePair<TKey, TValue> {
+    constructor(
+      public key: TKey,
+      public value: TValue
+    ) {}
+  }
+```
+
+This class creates two generics, `TKey` to be the type of the key parameter, and `TValue` to be the type of the value parameter. We can now use this class to create instances of typed key value pairs.
+
+```typescript
+  let pair1 = new KeyValuePair(1, 'First'); // TypeScript: let pair1: KeyValuePair<number, string>
+  let pair2 = new KeyValuePair('Second', Date.now()); // TypeScript: let pair2: KeyValuePair<string, number>
+  let pair3 = new KeyValuePair(3, 'Third'); // TypeScript: let pair3: KeyValuePair<number, string>
+```
+
+We see that TypeScript dynamically infers information about the types based on the values that we pass in. Even more useful we can explicitly define the types that we expect.
+
+```typescript
+  let pair1 = new KeyValuePair<number, string>(1, 'First');
+  let pair2 = new KeyValuePair<string, Date>('Second', Date.now()); // Error: Argument of type 'number' is not assignable to parameter of type 'Date'.
+  let pair3 = new KeyValuePair<number, string>(3, 'Third');
+```
+And by doing so, we found a bug in our code. You could probably see this coming, but the JavaScript `Date.now` method doesn't return a Date object. It returns a the number of milliseconds since January 1, 1970, 00:00:00 UTC. So we need to make sure we create an object of the right type.
+
+```typescript
+  let pair1 = new KeyValuePair<number, string>(1, 'First');
+  let pair2 = new KeyValuePair<string, Date>('Second', new Date(Date.now()));
+  let pair3 = new KeyValuePair<number, string>(3, 'Third');
+```
+
+And that's pretty cool but it gets more interesting. Now that we've defined a generic key-value pair type, we can create a class to interact with any instances of that type. 
+
+For example, we can create a utility that iterates through a collection of any type of key-value pair and prints them to the console.
+
+```typescript
+
+  let pair1 = new KeyValuePair<number, string>(1, 'First');
+  let pair2 = new KeyValuePair<string, Date>('Second', new Date(Date.now()));
+  let pair3 = new KeyValuePair<number, string>(3, 'Third');
+
+  class KeyValuePairPrinter<T, U> {
+
+    //Pass reference to an array of key-value pairs of type T and U.
+    constructor(private pairs: KeyValuePair<T, U>[]) { }
+
+    //Iterate through the array and print each key-value property.
+    print() {
+      for(let p of this.pairs) {
+        console.log(`${p.key}: ${p.value}`)
+      }
+    }
+  }
+
+  var printer = new KeyValuePairPrinter([ pair1, pair3 ]); 
+  printer.print(); // 1: 'First' 3: 'Third'
+
+```
+
+Simply printing the properties to the console may not be that exciting, but what is cool is that we have statically typed access to the object's `key` and `value` properties regardless of what types `T` and `U` are. TypeScript is able to determine that `KeyValuePairPrinter` should only accept an array of `KeyValuePair` objects that have congruent `<T, U>` types. 
+
+In this example, TypeScript tells us `KeyValuePairPrinter` should only accepts Key value pairs of type `<number, string>`, and will in fact throw an error if we try to pass in parameters that don't agree with that type. 
+
+```typescript
+  var printer = new KeyValuePairPrinter([ pair1, pair2, pair3]); // Error: Type 'KeyValuePair<string, Date>' is not assignable to type 'KeyValuePair<number, string>'. Type 'string' is not assignable to type 'number'.
+  printer.print();
+```
+
+TypeScript throws an error because `pair2` has different type parameters from the rest of the list, so for all intents and purposes is a different type of object.
