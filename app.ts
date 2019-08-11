@@ -1,26 +1,11 @@
-class KeyValuePair<TKey, TValue> {
-  constructor(
-    public key: TKey,
-    public value: TValue
-  ) {}
+function totalLength<T extends { length: number }>(x: T, y: T) {
+  var total: number = x.length + y.length;
+  return total;
 }
 
-  let pair1 = new KeyValuePair<number, string>(1, 'First');
-  let pair2 = new KeyValuePair<string, Date>('Second', new Date(Date.now()));
-  let pair3 = new KeyValuePair<number, string>(3, 'Third');
+class CustomArray<T> extends Array<T> {}
 
-  class KeyValuePairPrinter<T, U> {
+var l1 = totalLength([1,2,3], [4,5,6]); 
+var l2 = totalLength('Justin', [1, 2, 3]); 
 
-    //Pass reference to an array of key-value pairs of type T and U.
-    constructor(private pairs: KeyValuePair<T, U>[]) { }
-
-    //Iterate through the array and print each key-value property.
-    print() {
-      for(let p of this.pairs) {
-        console.log(`${p.key}: ${p.value}`)
-      }
-    }
-  }
-
-  var printer = new KeyValuePairPrinter([ pair1, pair3 ]); 
-  printer.print(); // 1: 'First' 3: 'Third'
+var length = totalLength([1, 2, 3], new CustomArray<number>(1, 2, 3, 4))

@@ -1427,7 +1427,7 @@ When we pass in a string, TypeScript automatically updates `<T>` to be a string 
 
 Generics can be a powerful way to reduce duplicated code where the only difference is typing. 
 
-## Creating generic classes
+### Creating generic classes
 
 Previously we defined how to define generics in functions, but that is not the only place where they can be used. You can apply them to classes too. In fact we've already used a generic class in action without realizing it. Among others, TypeScript handles the built in JavaScript array type as a generic class. Previously we used this syntax to indicate an array of a specific type:
 
@@ -1515,3 +1515,72 @@ In this example, TypeScript tells us `KeyValuePairPrinter` should only accepts K
 ```
 
 TypeScript throws an error because `pair2` has different type parameters from the rest of the list, so for all intents and purposes is a different type of object.
+
+
+### Applying generic constraints
+
+Let's return back to one of the first examples we talked about earlier in these notes. The `totalLength` function that adds the length properties of two objects.
+
+```typescript
+  function totalLength(x: { length: number }, y: { length: number }) {
+    var total: number = x.length + y.length;
+    return total;
+  }
+```
+
+As we discussed previously, the way that this function is implemented, there is nothing stopping us from adding the length of two incongruent objects. For example adding the length of an array to the length of a string probably doesn't make very much sense to do. So to avoid this possibility let's use generic types to enforce that the object parameters be of the same type. 
+
+```typescript
+   function totalLength<T>(x: T, y: T) {
+     var total: number = x.length + y.length; // Error: Property 'length' does not exist on type 'T'.
+     return total;
+   }
+
+   var length = totalLength('Justin', [1, 2, 3]); // Error: Argument of type 'number[]' is not assignable to parameter of type 'string'.
+```
+
+We've solved the problem of differing types, but now we get an error stating the property we tried to access isn't defined on our generic type. Luckily TypeScript offers the concept of generic constraints that we can apply to our generic type parameters to restrict the types of objects that satisfy those parameters. 
+
+The generic constraint syntax is simple and it involves a keyword we have already used. Before we constrained our parameters to objects that contain a property called `length` with a type of `number` so let's do the same now using generic constraints:
+
+```typescript
+  function totalLength<T extends { length: number }>(x: T, y: T) {
+    var total: number = x.length + y.length;
+    return total;
+  }
+
+  var l1 = totalLength([1,2,3], [4,5,6]); // 6 
+  var l2 = totalLength('Justin', [1, 2, 3]); // Error: Argument of type 'number[]' is not assignable to parameter of type 'string'.
+```
+
+And as we see, the error message on line 2 has disappeared but the error on line 7 remains, which is exactly what we want. We now have a function that does what we originally sought out to do, which is to only accept parameter objects of the same type, and specify that that type must have a length property represented by a number. 
+
+And in the event that implementing your generic constraints with anonymous types becomes cumbersome, you can simply abstract them into interfaces and it functions exactly the same.
+
+```typescript
+  interface HasLength {
+    length: number;
+  }
+
+  function totalLength<T extends HasLength>(x: T, y: T) {
+    var total: number = x.length + y.length;
+    return total;
+  }
+
+  var l1 = totalLength([1,2,3], [4,5,6]); // 6 
+  var l2 = totalLength('Justin', [1, 2, 3]); // Error: Argument of type 'number[]' is not assignable to parameter of type 'string'.
+```
+
+That is a basic overview of generic constraints, but there is a caveats to be aware of. So far we have said that both parameters must be of the same type, that is whatever TypeScript evaluates `<T>` to be. But that's not strictly true. They can be any type that is compatible with type `<T>` including those types that inherit from it. 
+
+To demonstrate this let's define our own custom class that extends the base array class like this:
+
+```typescript
+  class CustomArray<T> extends Array<T> {}
+```
+
+Because it inherits from the Array class it IS and instance of the Array class so it matches the same generic type parameter `<T>`. 
+
+```typescript
+  var length = totalLength([1, 2, 3], new CustomArray<number>(1, 2, 3, 4))) // 7
+```

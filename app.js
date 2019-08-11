@@ -1,26 +1,27 @@
-var KeyValuePair = /** @class */ (function () {
-    function KeyValuePair(key, value) {
-        this.key = key;
-        this.value = value;
-    }
-    return KeyValuePair;
-}());
-var pair1 = new KeyValuePair(1, 'First');
-var pair2 = new KeyValuePair('Second', new Date(Date.now()));
-var pair3 = new KeyValuePair(3, 'Third');
-var KeyValuePairPrinter = /** @class */ (function () {
-    //Pass reference to an array of key-value pairs of type T and U.
-    function KeyValuePairPrinter(pairs) {
-        this.pairs = pairs;
-    }
-    //Iterate through the array and print each key-value property.
-    KeyValuePairPrinter.prototype.print = function () {
-        for (var _i = 0, _a = this.pairs; _i < _a.length; _i++) {
-            var p = _a[_i];
-            console.log(p.key + ": " + p.value);
-        }
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
     };
-    return KeyValuePairPrinter;
-}());
-var printer = new KeyValuePairPrinter([pair1, pair3]);
-printer.print(); // 1: 'First' 3: 'Third'
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+function totalLength(x, y) {
+    var total = x.length + y.length;
+    return total;
+}
+var CustomArray = /** @class */ (function (_super) {
+    __extends(CustomArray, _super);
+    function CustomArray() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return CustomArray;
+}(Array));
+var l1 = totalLength([1, 2, 3], [4, 5, 6]);
+var l2 = totalLength('Justin', [1, 2, 3]);
+var length = totalLength([1, 2, 3], new CustomArray(1, 2, 3, 4));
