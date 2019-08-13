@@ -1584,3 +1584,261 @@ Because it inherits from the Array class it IS and instance of the Array class s
 ```typescript
   var length = totalLength([1, 2, 3], new CustomArray<number>(1, 2, 3, 4))) // 7
 ```
+
+## Modules
+
+### Understanding the need for modules in JavaScript
+
+JavaScript has existed for quite some time, it's about 23 years old as of the time I am writing these notes. But it's only in the more recent years that the industry has started to take JavaScript seriously and apply patterns, practices, and development standards when working in the browser. We briefly hit upon a major point of contention, which is polluting the global namespace. This can be exacerbated in JavaScript because any .js file that gets read by the browser gets more or less concatenated into the same global scope. 
+
+Placing code in the global namespace encourages a lot of anti-design patterns and dangerous practices simply because you can and its easy. Need to share a resource across two classes? Put it in a global variable, problem solved! As the code base scales you pretty quickly end up with code that is horribly obfuscated and tightly coupled. Adding additional features and tracking down bugs becomes frightening because the function of the application depends on its structure remaining exactly the way it currently is. It encourages implicit sharing and mutation, and thus competition for resources between classes. There may be collisions between variables were, for example, `var counter = 0;` gets accidentally overwritten by `var counter = 1` later on in the code. It's also very difficult to determine dependencies and relationships between your components.
+
+This shouldn't come as a surprise if you come from other programming languages, because most have some kind of mechanism to modularize your code. The intent is to keep components separate, so they can be added and removed easily, enourage more explicit dependencies, and avoid collisions of objects/variables with different purposes but the same name. 
+
+Prior to ES6 there wasn't any standard API or mechanism for doing this, but the need was still there. So developers invented their own design patterns to get around this. *Learning JavaScript Design Patterns* by Addy Osmani is a great resource to learn about design patterns not only as they pertain to modularization but many other topics as well. A link to the entire text is distributed by the author, for free, at this link https://addyosmani.com/resources/essentialjsdesignpatterns/book/index.html .
+
+In this book is discussed several design patterns that relate to modularzation/encapsulation and the first is the Module Pattern/Revealing Module Pattern. The second is the concept of namespaces, and the third is ES6 modules/module loaders. In the following sections we will describe these patterns starting with namespaces.
+
+### Organizing your code with namespaces
+
+Most popular statically typed programming languages today have the concept of namespaces. C, C++, C#, and Java just to name a few. The reason namespaces are so popular is because they are an excellent way to avoid naming collisions and refer to a group of types as one organizational unit. If you have used C, C++, or C# then using namespaces should feel very familiar. (Not a surprise. C# and TypeScript were both developed by Microsoft). 
+
+It is simply the keyword `namespace` followed by an identifier. Any valid identifer that can be used for a variable can be used here. i.e.:
+
+```typescript
+  namespace Model {
+
+  }
+```
+
+Or if you want you can add dot nation `.` to add a hierarchy of nested namespaces.
+
+```typescript
+  namespace TodoApp.Model {
+
+  }
+```
+
+If you're curious let's look at the JavaScript the above code compiles into:
+
+```javascript
+```
+
+It doesn't actually generate anything. The namespace is empty and just gets ignored by the compiler. 
+
+So let's put some code in there and see what the compiler generates.
+
+```typescript
+  namespace TodoApp.Model {
+    interface Todo {
+      id: number;
+      name: string;
+      state: TodoState;
+    }
+  }
+```
+
+==>
+
+```javascript
+```
+
+Okay, it still generates nothing. This all seems kind of pointless, but it's to demonstrate that the namespace doesn't get generated if it's empty. And as we recall from earlier, interfaces are a tool that only the TypeScript compiler utilizes. They don't actually generate any JavaScript code. So let's add some TypeScript that does:
+
+```typescript
+  namespace TodoApp.Model {
+    enum TodoState {
+      Completed = 1,
+      HighPriority,
+      LowPriority,
+      Deleted
+    }
+  }
+```
+
+==>
+
+```javascript
+  var TodoApp;
+  (function (TodoApp) {
+      var Model;
+      (function (Model) {
+          var TodoState;
+          (function (TodoState) {
+              TodoState[TodoState["Completed"] = 1] = "Completed";
+              TodoState[TodoState["HighPriority"] = 2] = "HighPriority";
+              TodoState[TodoState["LowPriority"] = 3] = "LowPriority";
+              TodoState[TodoState["Deleted"] = 4] = "Deleted";
+          })(TodoState || (TodoState = {}));
+      })(Model = TodoApp.Model || (TodoApp.Model = {}));
+  })(TodoApp || (TodoApp = {}));
+```
+
+This looks convoluted, so let's just take a look at the first two IIFES
+
+```javascript
+  var TodoApp;
+  (function (TodoApp) {
+      var Model;
+      (function (Model) {
+
+      })(Model = TodoApp.Model || (TodoApp.Model = {}));
+  })(TodoApp || (TodoApp = {}));
+```
+
+As we see the code generates the variable TodoApp globally, which will eventually serve as our namespace. It then creates an anonymous IIFE, which takes the function parameter `(TodoApp || (TodoApp = {}))`. This serves the combined objective of passing TodoApp if it has already been defined elsewere in our code and we want to tack on additional features to the namespace, or initializing TodoApp to be an empty object if not. 
+
+Then the code initializes the variable `Model` on line 3. The purpose of the IIFEs is to create regions of protected, nested scope. That way if we try and access `Model` in the global scope like this:
+
+```typescript
+  var TodoApp;
+  (function (TodoApp) {
+      var Model;
+      (function (Model) {
+        // ...
+      })(Model = TodoApp.Model || (TodoApp.Model = {}));
+  })(TodoApp || (TodoApp = {}));
+
+  console.log(Model); // ReferenceError: Model is not defined
+```
+
+We receive a ReferenceError. On the next line, line 4 is another IIFE, which receives `(Model = TodoApp.Model || (TodoApp.Model = {}))` as a function parameter. The purpose of this is similar to the arguments to the outside IIFE. Assign the value of `Model` to the object `TodoApp.Model` if it has already been defined, otherwise create the property `Model` on our `TodoApp` object and assign it the value of an empty object. 
+
+And let's probe the code a bit to see the actual structure of our resulting objects.
+
+```javascript
+var TodoApp;
+(function (TodoApp) {
+    var Model;
+    (function (Model) {
+        var TodoState;
+        (function (TodoState) {
+            TodoState[TodoState["Completed"] = 1] = "Completed";
+            TodoState[TodoState["HighPriority"] = 2] = "HighPriority";
+            TodoState[TodoState["LowPriority"] = 3] = "LowPriority";
+            TodoState[TodoState["Deleted"] = 4] = "Deleted";
+        })(TodoState || (TodoState = {}));
+    })(Model = TodoApp.Model || (TodoApp.Model = {}));
+})(TodoApp || (TodoApp = {}));
+
+console.log(TodoApp) // { Model: {} }
+```
+
+So we have what you might have expected. `TodoApp` is an object that contains `Model`, an empty object. But if you were expecting the trend to continue, and that `Model` would contain `TodoState` as a property, you guessed wrong. If we want TypeScript to expose TodoState to the outside world then we need to use the `export` keyword, like this:
+
+```typescript
+  namespace TodoApp.Model {
+    export enum TodoState {
+      Completed = 1,
+      HighPriority,
+      LowPriority,
+      Deleted
+    }
+  }
+```
+
+Which generates the following javascript code ==>
+
+```javascript
+var TodoApp;
+(function (TodoApp) {
+    var Model;
+    (function (Model) {
+        var TodoState;
+        (function (TodoState) {
+            TodoState[TodoState["Completed"] = 1] = "Completed";
+            TodoState[TodoState["HighPriority"] = 2] = "HighPriority";
+            TodoState[TodoState["LowPriority"] = 3] = "LowPriority";
+            TodoState[TodoState["Deleted"] = 4] = "Deleted";
+        })(TodoState = Model.TodoState || (Model.TodoState = {}));
+    })(Model = TodoApp.Model || (TodoApp.Model = {}));
+})(TodoApp || (TodoApp = {}));
+```
+The only difference between this code and the previous is on line 11, where `TodoState` gets set as a property on the `Model` object.
+
+You can see how the `namespace` syntax is a lot more friendly to work with than the equivalent javascript. 
+
+And if you're wondering why TypeScript bothers to generate code that passes the existing namespace into the IIFEs it's because you are free to declare the same namespace multiple times throughout your application, either in the same file or in separate ones. Each subsequent definition will simply concatenate the properties onto the existing namespace.
+
+For example the following is totally valid code:
+
+```typescript
+namespace TodoApp.Model {
+  export interface Todo {
+    id: number;
+    name: string;
+    state: TodoState;
+  }
+}
+
+// ...
+
+namespace TodoApp.Model {
+  export enum TodoState {
+    Completed = 1,
+    HighPriority,
+    LowPriority,
+    Deleted
+  }
+}
+```
+
+So that's all cool and dandy, but what how do we utilize the members defined in namespaces elsewhere in our code? What if we had a separate namespace in which we wanted to access members from TodoApp.Model like this?
+
+```typescript
+namespace TodoApp.Model {
+  export interface Todo {
+    id: number;
+    name: string;
+    state: TodoState;
+  }
+}
+
+namespace TodoApp.Model {
+  export enum TodoState {
+    Completed = 1,
+    HighPriority,
+    LowPriority,
+    Deleted
+  }
+}
+
+namespace DataAcess {
+  export interface ITodoService {
+    add(todo: Todo): Todo; //Error: Cannot find name 'Todo'.
+    delete(todoId: number): void;
+    getAll(): Todo[]; //Error: Cannot find name 'Todo'.
+    getById(todoId: number): Todo; //Error: Cannot find name 'Todo'.
+  }
+}
+```
+
+Well you can replace every Todo with TodoApp.Model.Todo:
+
+```typescript
+namespace DataAcess {
+  export interface ITodoService {
+    add(todo: TodoApp.Model.Todo): TodoApp.Model.Todo; 
+    delete(todoId: number): void;
+    getAll(): TodoApp.Model.Todo[]; 
+    getById(todoId: number): TodoApp.Model.Todo; 
+  }
+}
+```
+
+Which is kind of cumbersome, so you can use the `import` keyworld to alias these namespace references.
+
+```typescript
+namespace DataAcess {
+
+  import Model = TodoApp.Model;
+  import Todo = Model.Todo;
+
+  export interface ITodoService {
+    add(todo: Todo): Todo; 
+    delete(todoId: number): void;
+    getAll(): Todo[]; 
+    getById(todoId: number): Todo; 
+  }
+}
+```

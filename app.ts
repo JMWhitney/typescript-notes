@@ -1,11 +1,27 @@
-function totalLength<T extends { length: number }>(x: T, y: T) {
-  var total: number = x.length + y.length;
-  return total;
+namespace TodoApp.Model {
+  export class Todo {
+
+  }
 }
 
-class CustomArray<T> extends Array<T> {}
+namespace TodoApp.Model {
+  export enum TodoState {
+    Completed = 1,
+    HighPriority,
+    LowPriority,
+    Deleted
+  }
+}
 
-var l1 = totalLength([1,2,3], [4,5,6]); 
-var l2 = totalLength('Justin', [1, 2, 3]); 
+namespace DataAccess {
 
-var length = totalLength([1, 2, 3], new CustomArray<number>(1, 2, 3, 4))
+  import Model = TodoApp.Model;
+  import Todo = Model.Todo;
+
+  export interface ITodoService {
+    add(todo: Todo): Todo;
+    delete(todoId: number): void;
+    getAll(): Todo[];
+    getById(todoId: number): Todo;
+  }
+}
