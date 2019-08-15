@@ -1674,7 +1674,7 @@ Okay, it still generates nothing. This all seems kind of pointless, but it's to 
   })(TodoApp || (TodoApp = {}));
 ```
 
-This looks convoluted, so let's just take a look at the first two IIFES
+This looks convoluted, so let's just take a look at the first two IIFES:
 
 ```javascript
   var TodoApp;
@@ -1702,9 +1702,9 @@ Then the code initializes the variable `Model` on line 3. The purpose of the IIF
   console.log(Model); // ReferenceError: Model is not defined
 ```
 
-We receive a ReferenceError. On the next line, line 4 is another IIFE, which receives `(Model = TodoApp.Model || (TodoApp.Model = {}))` as a function parameter. The purpose of this is similar to the arguments to the outside IIFE. Assign the value of `Model` to the object `TodoApp.Model` if it has already been defined, otherwise create the property `Model` on our `TodoApp` object and assign it the value of an empty object. 
+We receive a ReferenceError. On the next line, line 4 is another IIFE, which receives `(Model = TodoApp.Model || (TodoApp.Model = {}))` as a function parameter. The purpose of this is similar to the arguments to the outside IIFE. Assign the value of `Model` to the object `TodoApp.Model` if it has already been defined, otherwise create the property `Model` on our `TodoApp` object and assign it the value of an empty object. By the way, using IIFEs to create regions of private scope, and only exposing the properties and variables that we need to is called the revealing module pattern.
 
-And let's probe the code a bit to see the actual structure of our resulting objects.
+Let's probe the code a bit to see the actual structure of our resulting objects.
 
 ```javascript
 var TodoApp;
@@ -1816,7 +1816,7 @@ namespace DataAcess {
 Well you can replace every Todo with TodoApp.Model.Todo:
 
 ```typescript
-namespace DataAcess {
+namespace DataAccess {
   export interface ITodoService {
     add(todo: TodoApp.Model.Todo): TodoApp.Model.Todo; 
     delete(todoId: number): void;
@@ -1829,7 +1829,7 @@ namespace DataAcess {
 Which is kind of cumbersome, so you can use the `import` keyworld to alias these namespace references.
 
 ```typescript
-namespace DataAcess {
+namespace DataAccess {
 
   import Model = TodoApp.Model;
   import Todo = Model.Todo;
@@ -1842,3 +1842,139 @@ namespace DataAcess {
   }
 }
 ```
+**Summary**: TypeScript namespaces are a simple yet powerful way to create regions of privately scoped variables. And not just pseudo-privately scoped, in the sense that the TypeScript compiler will throw an error if you try to access them, but rather they will be privately scoped in your actual executable javascript. TypeScript namespaces abstract on the revealing module design pattern, leaving a syntax that is functionally equivalent but much more comfortable to use. In the next section I'll talk about refactoring the application that we have been developing thus far to fully take advantage of namespaces.
+
+### Using namespaces to encapsulate private members
+
+In the previous section we talked about how namespaces work, so now let's see how to use them in practice, in the context of our todo application. We'll start by creating a file named `DataAccess.ts`, define a namespace `DataAccess` inside that file, and cut and paste the `TodoService` class as well as the `ITodoService` interface inside `DataAccess`. The resulting file will look like this:
+
+```typescript
+// DataAccess.ts
+namespace DataAccess {
+
+  import Model = TodoApp.Model;
+  import Todo = Model.Todo;
+
+  export interface ITodoService {
+    add(todo: Todo): Todo;
+    delete(todoId: number): void;
+    getAll(): Todo[];
+    getById(todoId: number): Todo;
+  }
+
+  class TodoService implements ITodoService { 
+  
+    private static _lastId: number = 0;
+  
+    get nextId(): number {
+      return TodoService._lastId += 1;
+    }
+  
+    constructor(private todos: Todo[]) {
+    }
+  
+    add(todo: Todo): Todo {
+      todo.id = this.nextId;
+  
+      this.todos.push(todo);
+  
+      return todo;
+    } 
+  
+    getAll():Todo[] {
+      return this.todos;
+    }
+  
+    getById(todoId: number): Todo {
+      var filtered = this.todos.filter(x => x.id == todoId);
+ 
+      if( filtered.length ) {
+        return filtered[0];
+      }
+
+      return null;
+    }
+  
+    delete(todoId: number): void {
+      var toDelete = this.getById(todoId);
+      
+      var deletedIndex = this.todos.indexOf(toDelete);
+  
+      this.todos.splice(deletedIndex, 1);
+    }
+  }
+}
+```
+
+As we recall, members inside a namespace are privately scoped by default, so we can remove the `private static` keywords from our _lastId property and move it outside of the class.
+
+```typescript
+  // DataAccess.ts
+  namespace DataAccess {
+    import Model = TodoApp.Model;
+    import Todo = Model.Todo;
+
+    let _lastId: number = 0;
+
+    export interface ITodoService {
+      // ...
+    }
+
+    class TodoService implements ITodoService {
+      // ...
+    }
+  }
+```
+
+And we also want to clean up any references to the TodoService._lastId property, which doesn't exist anymore. And while we're at it we'll move the `nextId` getter method outside of the class, rename it, and clean up any references to it as well.
+
+```typescript
+// DataAccess.ts
+
+// ...
+
+function generateTodoId() {
+  return _lastId += 1;
+}
+
+class TodoService implements ITodoService {
+
+// get nextId(): number {
+//    return _lastId += 1;
+// }
+
+  add(todo: Todo): Todo {
+    todo.id = generateTodoId();
+
+    this.todos.push(todo);
+
+    return todo;
+  } 
+
+// ...
+}
+```
+
+But actually, we receive an error here, and that is because we haven't formally defined the TodoApp namespace yet. So let's create a file `model.ts` that will house the namespace to contain the model for our data.
+
+```typescript
+  namespace TodoApp.Model {
+
+  export interface Todo {
+      id: number;
+      name: string;
+      state: TodoState;
+  }
+
+  export enum TodoState {
+      Completed = 1,
+      HighPriority,
+      LowPriority,
+      Cancelled
+  }
+}
+```
+
+And now the code in `DataService.js` compiles correctly because TypeScript knows to look for the `TodoApp.Model` namespace and access its exported members. 
+
+Namespaces, which use the internal module approach, are just one way that TypeScript offers to encapsulate your code. Another way, called the external module approach, is equally effective and actually more common in some circumstances, like browser based 'lazy loading' or node.js development. That is what we will cover in the next section.
