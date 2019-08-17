@@ -1978,3 +1978,18 @@ But actually, we receive an error here, and that is because we haven't formally 
 And now the code in `DataService.js` compiles correctly because TypeScript knows to look for the `TodoApp.Model` namespace and access its exported members. 
 
 Namespaces, which use the internal module approach, are just one way that TypeScript offers to encapsulate your code. Another way, called the external module approach, is equally effective and actually more common in some circumstances, like browser based 'lazy loading' or node.js development. That is what we will cover in the next section.
+
+### Understanding the difference between internal and external modules.
+
+Even though TypeScript namespaces, which use the internal module approach, can be an effective way of encapsulating your code, they aren't seen as often as external modules are these days. 
+
+The internal module approach allows you to group components together, and get them out of the global namespace and under an umbrella object. You control what components belong to what objects by wrapping them in namespaces, using the syntax that we just covered. It is also possible to define multiple namespaces within the same file, or even modify one existing namespace in multiple files. 
+
+The external module approach has most of the same goals as its internal counterpart. Both approaches offer and encourage encapsulation and organization but by differing means. Both have private members by default, and require exposed components to be explicitly exported, as well as required dependencies to be imported. The biggest difference is that the external module uses the file that it is contained in as its enclosing scope. That means that multiple modules cannot be defined in the same file, and if you're tempted to do so you would probably get the better separation of concerns and thus modularity from separating them into their own files.
+
+In the next sections we'll cover the two different syntaxes that TypeScript uses for the external module. The first is the `require` method, which is probably familiar if you have spent some time programming with Node.js. The second is the ES6 syntax, which is now officially ECMAScript standard. 
+
+Keep in mind the two different syntaxes are actually functionally identical, and by that I mean the TypeScript compiler generates the exact same code for each of them. If you're wondering why two syntaxes exist that do the exact same thing, it's because the `require` method, was defined prior to the release of the ES6 standard. So instead of dropping support for it, making a lot of code defunct in the process, the developers of TypeScript chose to maintain support for both features.
+
+If you are having troubles deciding which syntax to use consider using the syntax defined by ECMAScript itself, because that is the syntax that is officially supported in the browser.
+
