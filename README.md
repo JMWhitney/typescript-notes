@@ -1993,3 +1993,211 @@ Keep in mind the two different syntaxes are actually functionally identical, and
 
 If you are having troubles deciding which syntax to use consider using the syntax defined by ECMAScript itself, because that is the syntax that is officially supported in the browser.
 
+### Switching from internal to external modules
+
+In the previous section I mentioned that the primary difference between the internal module and the external module is that the external module uses the file itself to encapsulate its scope. Because of this it doesn't make very much sense to define internal namespaces inside of an external module.
+
+Earlier we defined a `DataAccess` namespace inside a file named `DataAccess.js`. If we then decided to switch over to external modules, but kept the internal modules inside the `DataAccess.js` file we would have to reference inside members using the following syntax:
+
+```typescript
+DataAccess.DataAccess.TodoService 
+```
+
+Which is kind of ridiculous. So let's refactor our application thus far by removing the namespaces so we can use external modules instead. 
+
+```typescript
+//DataService.ts
+
+//namespace DataAccess {
+// import Model = TodoApp.Model;
+// import Todo = Model.Todo;
+
+let _lastId: number = 0;
+
+function generateTodoId(): number {
+  return _lastId += 1;
+}
+
+export interface ITodoService {
+  add(todo: Todo): Todo;
+  delete(todoId: number): void;
+  getAll(): Todo[];
+  getById(todoId: number): Todo;
+}
+
+class TodoService implements ITodoService { 
+  constructor(private todos: Todo[]) {
+  }
+
+  add(todo: Todo): Todo {
+    todo.id = generateTodoId();
+
+    this.todos.push(todo);
+
+    return todo;
+  } 
+
+  getAll():Todo[] {
+    return this.todos;
+  }
+
+  getById(todoId: number): Todo {
+    // Return only the Todos with id == todoId
+    var filtered = this.todos.filter(x => x.id == todoId);
+
+    // If we found it, return it. 
+    if( filtered.length ) {
+      return filtered[0];
+    }
+
+    //Otherwise return nothing.
+    return null;
+  }
+
+  delete(todoId: number): void {
+    //Obtain reference to the object we want to remove
+    var toDelete = this.getById(todoId);
+    
+    //Find its position in the list of todos
+    var deletedIndex = this.todos.indexOf(toDelete);
+
+    //Remove it from the list
+    this.todos.splice(deletedIndex, 1);
+  }
+}
+//}
+```
+
+```typescript
+//model.ts
+
+// namespace TodoApp.Model {
+
+export interface Todo {
+    id: number;
+    name: string;
+    state: TodoState;
+}
+
+export enum TodoState {
+    Completed = 1,
+    HighPriority,
+    LowPriority,
+    Cancelled
+}
+// }
+```
+
+We remove the namespace declarations in each file, as well as the import statements because we will be replacing them shortly. We keep the export keywords on the components that we want to export because that is the syntax that TypeScript's external module uses. However, we now receive a error on every line of the `DataService.ts` file that references the objects found in `model.ts`. This is to be expected. In the next section we will cover importing using the CommonJs syntax.
+
+### Importing modules using the CommonJS syntax
+
+The CommonJS syntax, or as we have been refering to the 'require' syntax, is pretty straight forward. At the top level of your file simply write the following line for any module you want to import. In our Todo application it would look like this:
+
+```typescript
+// DataService.ts
+import Model = require('./model');
+```
+
+This allows us to use any of the exported components from `model.ts` while keeping their implementation data/objects/methods private. Notice that while we specify the path to the module file, we don't have to specify the file extension. Because TypeScript and JavaScript are smart enough to look for the right extension. 
+
+Now if we wanted to use any of the specific components contained within the `Model` we have two ways of going about this. We can simply access any properties that we want directly on the `Module` object itself:
+
+```typescript
+  // DataService.ts
+
+  // ...
+  export interface ITodoService {
+    add(todo: Model.Todo): Model.Todo;
+    delete(todoId: number): void;
+    getAll(): Model.Todo[];
+    getById(todoId: number): Model.Todo;
+  }
+
+  // ...
+```
+
+Which is quite cumbersome, but will solve the reference errors. The other method is to create an alias for any objects you want to reference from the imported module like this:
+
+```typescript
+  // DataService.ts
+  import Model = require('./model');
+  import Todo = Model.Todo;
+
+  export interface ITodoService {
+    add(todo: Todo): Todo;
+    delete(todoId: number): void;
+    getAll(): Todo[];
+    getById(todoId: number): Todo;
+  }
+```
+
+And this will also solve the reference error we had with `Todo`. You might find it somewhat awkward to use two lines to import just the `Todo` object. In other words you may be tempted to do something like this:
+
+```typescript
+  // DataService.ts
+  import Todo = require('./model').Todo;
+```
+
+Which isn't valid syntax. If you want to import specific components from modules you will have to use the two line method. However, ES6 syntax actually does allow you to import specific components and alias them on one line. Which is a reason why it is preferred by many. This is what will be covered in the next section. 
+
+### importing modules with ES6
+
+ES6 module importing works basically the same way. i.e. the equivalent to the previously defined `require` syntax would look like this:
+
+```typescript
+  // DataService.ts
+  import * as Model from './model';
+```
+
+The asterisk `*` signifies that we want to accept all the exported parameters from `model` file, and place them on the `Model` object. This syntax also requires a relative path to the file we want to import, but does not require a file extension.
+
+But it's not always that you need to pull every single exported component from a module. A module may define an unlimited number of exports, but often you may only need a couple. You can alias imports in the same way that we just showed how to do:
+
+```typescript
+  // DataService.ts
+  import * as Model from './model';
+  import Todo = Model.Todo;
+```
+
+But that is not the officially recommended method. Instead we can leverage ES6 object destructuring to accept and alias specific imports on one line like this:
+
+```typescript
+  // DataService.ts
+  import { Todo } from './model';
+```
+
+This syntax will look for an exported component called `Todo` in the scope of the `model` module, and assign it to a variable of the same name in the scope of our `DataService` module. You can do this for any number of imports by simply delineating them with commas like this:
+
+```typescript
+  // DataService.ts
+  import { Todo, TodoState } from './model';
+```
+
+Let's say we didn't like the names of the components that the module developer used. We can even create our own aliases for the components to work with in this specific file like this:
+
+```typescript
+  // DataService.ts
+  import { Todo as TodoTask, TodoState as State } from './model'
+```
+
+Which will do basically what it looks like it will do. Import `Todo` from the `model` file, and assign it to a variable of the name `TodoTask`. Take note that it no longer creates a variable of the name `Todo` so any references to `Todo` will throw a reference error and should be changed to `TodoTask`.
+
+One last thing to take note of is that you don't actually have to import anything from a module. For example you can just do this:
+
+```typescript
+  import './jQuery';
+```
+
+Here the current working module won't have access to anything defined in the `jQuery` module. Really the only situation you would want to do this in is with a module that modifies the environment it is in, and the function of your application depends on it being loaded. 
+
+So you could have a top level module that simply serves as an entry point to your application, and calls all its constituent modules. Maybe something like this:
+
+```typescript
+  // app.ts
+  import './jQuery';
+  import './DataService';
+  import './ApiHandler';
+  import './UserAnalytics';
+```
+The file names here are arbitrary, but you get the picture.
